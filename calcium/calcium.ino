@@ -1,12 +1,12 @@
-const int led = 9;
-const int potentiometer = A0;
-const int dimmerLow = 0.05 * 1023;
-const int dimmerHigh = 0.95 * 1023;
-const float tauOn = 0.02;
-const float tauOff = 0.5;
-const float spikeSlow = 0.5;
-const float spikeFast = 10.0;
-a
+const int led = 9;                  // LED pwm pin
+const int potentiometer = A0;       // Potentiometer analog in pin
+const int dimmerLow = 0.05 * 1023;  // "off" potentiometer level
+const int dimmerHigh = 0.95 * 1023; // "always on" potentiometer level
+const float tauOn = 0.02;           // on time constant (ms)
+const float tauOff = 0.5;           // off time constant (ms)
+const float spikeSlow = 0.5;        // lowest spike rate (1/s)
+const float spikeFast = 10.0;       // highest spike rate (1/s)
+
 int dimmerRaw = 0;
 int t0 = millis();
 int t1 = 0;
@@ -21,12 +21,11 @@ float randUniform(float resolution) {
 }
 
 void setup() {
-  // put your setup code here, to run once:
   pinMode(led, OUTPUT);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  // get time since last update
   t1 = millis();
   dt = (float) (t1 - t0) / 1000;
   t0 = t1;
@@ -35,19 +34,20 @@ void loop() {
 
   if (dimmerRaw > dimmerHigh) {
     brightness = 1.0;
+    
   } else if (dimmerRaw < dimmerLow) {
     brightness = 0.0;
+    
   } else {
     spikeRate = map(dimmerRaw, dimmerLow, dimmerHigh, spikeSlow, spikeFast);
-    
+
+    // take an Euler step
     if (randUniform(1000) < spikeRate * dt) {
       brightness += (1.0 - brightness) / tauOn * dt;
     }
     
     brightness -= brightness / tauOff * dt;
   }
-  
-  
   
   analogWrite(led, (int) (brightness * 255));
 }
